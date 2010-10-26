@@ -1,16 +1,17 @@
 import math, sys, pygtk, gtk, cairo, time
 pygtk.require('2.0')
 
-from meme.layout import *
+from meme.layout import Layout
 from meme.model import *
-from meme.renderer import *
-from meme.style import *
+from meme.renderer import Renderer
+from meme.style import GlobalStyle
 
-class MemeGui(object):
+class MemeGui(Observer):
 	def __init__(self):
 		self._layout = None
 		self._renderer = None
 		self._model = Model("MyMap")
+		self._model.observe(self)
 
 		self._builder = gtk.Builder()
 		self._builder.add_from_file("ui/meme.xml")
@@ -18,8 +19,32 @@ class MemeGui(object):
 
 		self._main_win = self._builder.get_object("main_win")
 		self._canvas = self._builder.get_object("canvas")
+		self._text = self._builder.get_object("text")
 
 		self._main_win.show()
+		self._canvas.grab_focus()
+
+		def on_tab(m):
+			n = Node()
+			m.do(AddCommand(m.current or m.root, n))
+			self._text.grab_focus()
+			self._text.set_text("")
+
+		self._key_dispatch = {
+			gtk.keysyms.Return: lambda m: m.new_sibling(),
+			gtk.keysyms.Tab: on_tab,
+			gtk.keysyms.Left: lambda m: m.move(lambda n: n.parent),
+			gtk.keysyms.Right: lambda m: m.move(lambda n: n.child(0)),
+			gtk.keysyms.Up: lambda m: m.move(lambda n: n.find_sibling(-1)),
+			gtk.keysyms.Down: lambda m: m.move(lambda n: n.find_sibling(1)),
+			gtk.keysyms.F4: lambda m: m.do(ColorCommand(0)),
+			gtk.keysyms.F5: lambda m: m.do(ColorCommand(1)),
+			gtk.keysyms.F6: lambda m: m.do(ColorCommand(2)),
+			gtk.keysyms.F7: lambda m: m.do(ColorCommand(3)),
+			gtk.keysyms.F8: lambda m: m.do(ColorCommand(4)),
+			gtk.keysyms.Insert: lambda m: self._text.grab_focus(),
+			gtk.keysyms.Escape: lambda m: m.click(m.root)
+		}
 
 	def on_main_win_destroy(self, widget, data = None):
 		gtk.main_quit()
@@ -48,13 +73,43 @@ class MemeGui(object):
 			return False
 
 	def on_canvas_button_press_event(self, widget, data = None):
+		widget.grab_focus()
 		node = self._layout.find(data.x, data.y)
 		self._model.click(node)
-		widget.grab_focus()
-		if node:
-			a = time.time()
-			self._model.append_child(node, Node("New"))
-			print "Add took %fms" % ((time.time() - a) * 1000)
-			pass
+
+	def on_canvas_key_press_event(self, widget, data = None):
+		k = data.keyval
+		model = self._model
+		if k == gtk.keysyms.space:
+			model.toggle_expand()
+		elif k < 255:
+			if not model.current:
+				model.new_child()
+			self._text.grab_focus()
+			self._text.set_text(chr(k))
+			self._text.set_position(1)
+		elif k in self._key_dispatch:
+			self._key_dispatch[k](model)
+		else:
+			print "No binding for %d / %s" % (k, data)
+		return True
+
+	def on_text_key_press_event(self, widget, data = None):
+		if data.keyval == gtk.keysyms.Return:
+			self._canvas.grab_focus()
+		elif data.keyval == gtk.keysyms.Escape:
+			widget.set_text(self._model.title or "")
+			self._canvas.grab_focus()
+		elif data.keyval in [gtk.keysyms.Up, gtk.keysyms.Down]:
+			self._canvas.grab_focus()
+			self.on_canvas_key_press_event(self._canvas, data)
+
+	def on_text_focus_out_event(self, widget, data = None):
+		if self._model.current:
+			self._model.do(EditCommand(widget.get_text()))
+			widget.set_text(self._model.title or "")
+
+	def on_node_select(self, model, node, old):
+		self._text.set_text(node.title if node else "")
 
 # vim:sw=4 ts=4

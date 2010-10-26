@@ -63,16 +63,24 @@ class Renderer(object):
 
 		return pix
 
-	def clear(self, left, top, width, height):
+	def clear(self, left, top, width, height, color = None):
 		ctx = self._ctx
-		ctx.set_source_rgb(*self._style.background)
+		ctx.set_source_rgb(*(color or self._style.background))
 		ctx.rectangle(left, top, width, height)
 		ctx.fill()
 
-	def gap(self, width, height, top, delta):
+	def xgap(self, left, top, width, height, delta):
+		self.resize(left + width + delta, 0)
+		self._pixmap.draw_drawable(self._pixmap.new_gc(), self._pixmap, left, top, left + delta, top, width, height)
+		if delta < 0:
+			self.clear(left + width + delta, top, abs(delta), height)
+
+	def ygap(self, width, height, top, delta):
 		self.resize(width, height)
 		self._pixmap.draw_drawable(self._pixmap.new_gc(), self._pixmap, 0, top, 0, top + delta, width, height - delta)
 		self.clear(0, top, width, max(delta, 0))
+
+	def viewport(self, width, height):
 		self._canvas.set_size_request(width + self._style.marginx * 2 - self._style.padx,
 				height + self._style.marginy * 2)
 
@@ -97,13 +105,13 @@ class Renderer(object):
 		ctx.save()
 		ctx.set_antialias(cairo.ANTIALIAS_NONE)
 		ctx.rectangle(x + 1, cy - dimy2 + 1, peer.inner_width - 1, style.dimy - 1)
-		ctx.set_source_rgb(*node.color[1])
+		if current:
+			ctx.set_source_rgb(1, 1, 0)
+		else:
+			ctx.set_source_rgb(*style.colors[node.color][1])
 		ctx.fill_preserve()
 		ctx.set_line_width(1.0)
-		if current:
-			ctx.set_source_rgb(1, 0, 0)
-		else:
-			ctx.set_source_rgb(*node.color[0])
+		ctx.set_source_rgb(*style.colors[node.color][0])
 		ctx.stroke()
 
 		ctx.move_to(x + style.innerpad, cy - dimy2 + th / 3.0)

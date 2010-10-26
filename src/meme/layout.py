@@ -46,11 +46,31 @@ class Layout(Observer):
 
 		posx, posy = peer.find_pos()
 
-		self._renderer.gap(width, height, posy, delta)
+		self._renderer.ygap(width, height, posy, delta)
+		self._renderer.viewport(*self.size)
 		self.render(0, posy, width, max(delta - 1, self._style.dimy + self._style.pady))
 
 	def on_node_change(self, model, node):
-		pass
+		if node:
+			peer = self._peers[node]
+			ow = peer.outer_width
+			peer.recalc_width()
+			nw = peer.outer_width
+			if ow != nw:
+				tw = peer.total_width
+				pnode = node.parent
+				while pnode:
+					ppeer = self._peers[pnode]
+					ppeer.change_size(0, tw)
+					tw = ppeer.total_width
+					pnode = pnode.parent
+
+				x, y = peer.find_pos()
+				self._renderer.clear(x, y, ow, peer.total_height)
+				self._renderer.xgap(x + ow, y, peer.child_width, peer.total_height, nw - ow)
+				self._renderer.viewport(*self.size)
+
+			self.render_node(node)
 
 	def walk(self, left, top, width, height):
 		def subtree(node, peer, x, y):
@@ -105,10 +125,16 @@ class NodePeer(object):
 		self._outer_height = style.pady + style.dimy
 		self._child_height = 0
 		self._total_height = self._outer_height
-		self._inner_width = renderer.text_width(node.title) + style.innerpad * 2
-		self._outer_width = self._inner_width + style.padx
+		self._inner_width = 0
+		self._outer_width = 0
 		self._child_width = 0
-		self._total_width = self._outer_width
+		self._total_width = 0
+		self.recalc_width()
+
+	def recalc_width(self):
+		self._inner_width = self._renderer.text_width(self._node.title) + self._style.innerpad * 2
+		self._outer_width = self._inner_width + self._style.padx
+		self._total_width = self._outer_width + self._child_width
 
 	def hit_test_bounding(self, my_x, my_y, left, top, width, height):
 		return (left < my_x + self._total_width
@@ -185,5 +211,9 @@ class NodePeer(object):
 	@property
 	def outer_width(self):
 		return self._outer_width
+
+	@property
+	def child_width(self):
+		return self._child_width
 
 # vim:sw=4 ts=4

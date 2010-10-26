@@ -14,12 +14,12 @@ if __name__ == "__main__":
 	model = gui._model
 	root = model._root
 	for i in xrange(0, 5):
-		model.append_child(root, Node("Node %s" % ("x" * i)))
+		model.direct_append_child(root, Node("Node %s" % ("x" * i)))
 	for i in xrange(0, 2):
-		model.append_child(root.child(1), Node("Node %d" % i))
+		model.direct_append_child(root.child(1), Node("Node %d" % i))
 	for i in xrange(0, 7):
-		model.append_child(root.child(4), Node("Node %d" % i))
-	model.append_child(root.child(1).child(1), Node("Longer node"))
+		model.direct_append_child(root.child(4), Node("Node %d" % i))
+	model.direct_append_child(root.child(1).child(1), Node("Longer node"))
 
 	i = [0]
 	def idle():
