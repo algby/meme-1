@@ -1,8 +1,8 @@
-COLOR_PLAIN = ((0, 0, 0), (255, 255, 255))
-COLOR_RED = ((255, 0, 0), (255, 230, 230))
-COLOR_AMBER = ((200, 160, 0), (255, 240, 225))
-COLOR_GREEN = ((0, 255, 0), (230, 255, 230))
-COLOR_BLUE = ((0, 0, 255), (230, 230, 255))
+COLOR_PLAIN = ((0, 0, 0), (1, 1, 1))
+COLOR_RED = ((1, 0, 0), (1, 0.9, 0.9))
+COLOR_AMBER = ((0.8, 0.6, 0), (1, 0.9, 0.8))
+COLOR_GREEN = ((0, 1, 0), (0.9, 1, 0.9))
+COLOR_BLUE = ((0, 0, 1), (0.9, 0.9, 1))
 
 class Model(object):
 	def __init__(self, name):
@@ -128,5 +128,8 @@ class Node(object):
 	@property
 	def parent(self):
 		return self._parent
+
+	def __str__(self):
+		return "Node(%s)" % self.title
 
 # vim:sw=4 ts=4
