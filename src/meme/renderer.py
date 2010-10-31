@@ -76,9 +76,14 @@ class Renderer(object):
 			self.clear(left + width + delta, top, abs(delta), height)
 
 	def ygap(self, width, height, top, delta):
+		width += self._style.marginx * 2
+		height += self._style.marginy
 		self.resize(width, height)
 		self._pixmap.draw_drawable(self._pixmap.new_gc(), self._pixmap, 0, top, 0, top + delta, width, height - delta)
-		self.clear(0, top, width, max(delta, 0))
+		if delta > 0:
+			self.clear(0, top, width, delta)
+		elif delta < 0:
+			self.clear(0, height + delta, width, -delta)
 
 	def viewport(self, width, height):
 		self._canvas.set_size_request(width + self._style.marginx * 2 - self._style.padx,

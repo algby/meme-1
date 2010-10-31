@@ -25,9 +25,12 @@ class Layout(Observer):
 		if node:
 			self.render_node(node)
 
-	def on_node_add(self, model, node):
-		peer = NodePeer(node, self._style, self._renderer, self._peers)
-		self._peers[node] = peer
+	def on_node_add(self, model, node, pos):
+		# Peer may already exist if we are re-adding a deleted node
+		peer = self._peers.get(node)
+		if not peer:
+			peer = NodePeer(node, self._style, self._renderer, self._peers)
+			self._peers[node] = peer
 
 		osw, osh = self.size
 
@@ -49,6 +52,36 @@ class Layout(Observer):
 		self._renderer.ygap(width, height, posy, delta)
 		self._renderer.viewport(*self.size)
 		self.render(0, posy, width, max(delta - 1, self._style.dimy + self._style.pady))
+
+	def on_node_delete(self, model, node, pos):
+		peer = self._peers[node]
+
+		osw, osh = self.size
+
+		width = peer.total_width
+		height = peer.total_height
+		delta = -height
+		pnode = node.parent
+		while pnode:
+			ppeer = self._peers[pnode]
+			old_height = ppeer.total_height
+			ppeer.change_size(delta, width)
+			width = ppeer.total_width
+			height = ppeer.total_height
+			delta = height - old_height
+			pnode = pnode.parent
+
+		pnode = node.parent
+		ppeer = self._peers[pnode]
+		posx, posy = ppeer.find_pos()
+		posx += ppeer.outer_width
+		for i in xrange(0, pos):
+			posy += self._peers[pnode.child(i)].total_height
+
+		self._renderer.ygap(width, height - delta, posy - delta, delta)
+		self._renderer.clear(posx, posy, peer.total_width, peer.total_height)
+		self._renderer.viewport(*self.size)
+		self.render(0, posy - 1, posx + peer.total_width, peer.total_height)
 
 	def on_node_change(self, model, node):
 		if node:

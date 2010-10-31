@@ -20,9 +20,20 @@ class MemeGui(Observer):
 		self._main_win = self._builder.get_object("main_win")
 		self._canvas = self._builder.get_object("canvas")
 		self._text = self._builder.get_object("text")
+		self._undo = self._builder.get_object("undo_action")
+		self._redo = self._builder.get_object("redo_action")
 
 		self._main_win.show()
 		self._canvas.grab_focus()
+
+		def on_return(m):
+			n = Node()
+			sib = m.current
+			if not sib or not sib.parent:
+				return
+			m.do(AddCommand(sib.parent, n, sib.index + 1))
+			self._text.grab_focus()
+			self._text.set_text("")
 
 		def on_tab(m):
 			n = Node()
@@ -30,21 +41,34 @@ class MemeGui(Observer):
 			self._text.grab_focus()
 			self._text.set_text("")
 
+		def on_delete(m):
+			n = self._model.current
+			if n and n.parent:
+				m.do(DeleteCommand(n))
+
 		self._key_dispatch = {
-			gtk.keysyms.Return: lambda m: m.new_sibling(),
+			gtk.keysyms.Return: on_return,
 			gtk.keysyms.Tab: on_tab,
 			gtk.keysyms.Left: lambda m: m.move(lambda n: n.parent),
 			gtk.keysyms.Right: lambda m: m.move(lambda n: n.child(0)),
 			gtk.keysyms.Up: lambda m: m.move(lambda n: n.find_sibling(-1)),
 			gtk.keysyms.Down: lambda m: m.move(lambda n: n.find_sibling(1)),
-			gtk.keysyms.F4: lambda m: m.do(ColorCommand(0)),
-			gtk.keysyms.F5: lambda m: m.do(ColorCommand(1)),
-			gtk.keysyms.F6: lambda m: m.do(ColorCommand(2)),
-			gtk.keysyms.F7: lambda m: m.do(ColorCommand(3)),
-			gtk.keysyms.F8: lambda m: m.do(ColorCommand(4)),
+			gtk.keysyms.F4: lambda m: m.do(m.current and ColorCommand(m.current, 0)),
+			gtk.keysyms.F5: lambda m: m.do(m.current and ColorCommand(m.current, 1)),
+			gtk.keysyms.F6: lambda m: m.do(m.current and ColorCommand(m.current, 2)),
+			gtk.keysyms.F7: lambda m: m.do(m.current and ColorCommand(m.current, 3)),
+			gtk.keysyms.F8: lambda m: m.do(m.current and ColorCommand(m.current, 4)),
 			gtk.keysyms.Insert: lambda m: self._text.grab_focus(),
-			gtk.keysyms.Escape: lambda m: m.click(m.root)
+			gtk.keysyms.Escape: lambda m: m.click(m.root),
+			gtk.keysyms.Delete: on_delete
 		}
+
+		self._update_tools()
+
+	def _update_tools(self):
+		print self._model.has_undo
+		self._undo.set_sensitive(self._model.has_undo)
+		self._redo.set_sensitive(self._model.has_redo)
 
 	def on_main_win_destroy(self, widget, data = None):
 		gtk.main_quit()
@@ -106,10 +130,26 @@ class MemeGui(Observer):
 
 	def on_text_focus_out_event(self, widget, data = None):
 		if self._model.current:
-			self._model.do(EditCommand(widget.get_text()))
+			self._model.do(EditCommand(self._model.current, widget.get_text()))
 			widget.set_text(self._model.title or "")
+
+	def on_undo_action_activate(self, widget, data = None):
+		self._model.undo()
+
+	def on_redo_action_activate(self, widget, data = None):
+		self._model.redo()
 
 	def on_node_select(self, model, node, old):
 		self._text.set_text(node.title if node else "")
+		self._update_tools()
+
+	def on_node_change(self, model, node):
+		self._update_tools()
+
+	def on_node_add(self, model, node, pos):
+		self._update_tools()
+
+	def on_node_delete(self, model, node, pos):
+		self._update_tools()
 
 # vim:sw=4 ts=4

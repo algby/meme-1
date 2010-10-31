@@ -9,19 +9,22 @@ class Model(object):
 		self._observers = []
 
 	def do(self, cmd):
-		self._undo.append(cmd)
-		self._redo = []
-		cmd.do(self)
+		if cmd:
+			self._undo.append(cmd)
+			self._redo = []
+			cmd.do(self)
 
 	def undo(self):
-		cmd = self._undo.pop()
-		self._redo.append(cmd)
-		cmd.undo(self)
+		if self._undo:
+			cmd = self._undo.pop()
+			self._redo.append(cmd)
+			cmd.undo(self)
 
 	def redo(self):
-		cmd = self._redo.pop()
-		self._undo.append(cmd)
-		cmd.do(self)
+		if self._redo:
+			cmd = self._redo.pop()
+			self._undo.append(cmd)
+			cmd.do(self)
 
 	def click(self, node):
 		if node:
@@ -61,11 +64,19 @@ class Model(object):
 		else:
 			return None
 
-	def direct_append_child(self, node, child):
+	@property
+	def has_undo(self):
+		return len(self._undo) > 0
+
+	@property
+	def has_redo(self):
+		return len(self._redo) > 0
+
+	def direct_add_child(self, node, child, pos = None):
 		a = time.time()
-		node.append_child(child)
+		node.add_child(child, pos)
 		for o in self._observers:
-			o.on_node_add(self, child)
+			o.on_node_add(self, child, pos)
 		print "Add took %fms" % ((time.time() - a) * 1000)
 
 
@@ -76,32 +87,72 @@ class Observer(object):
 	def on_node_change(self, model, node):
 		pass
 
-	def on_node_add(self, model, node):
+	def on_node_add(self, model, node, pos):
 		pass
 
-	def on_node_remove(self, model, node):
+	def on_node_delete(self, model, node, pos):
 		pass
+
 
 class AddCommand(object):
-	def __init__(self, parent, node):
+	def __init__(self, parent, node, pos = None):
 		self._parent = parent
 		self._node = node
+		self._pos = pos
 
 	def do(self, model):
-		model.direct_append_child(self._parent, self._node)
+		model.direct_add_child(self._parent, self._node, self._pos)
+		self._pos = self._node.index
 		model.click(self._node)
 	
 	def undo(self, model):
-		pass
-		
+		pos = self._pos
+		model.click(None)
+		self._node.delete()
+		for o in model._observers:
+			o.on_node_delete(model, self._node, pos)
+		p = self._node.parent
+		n = p.count_children()
+		if n > pos:
+			model.click(p.child(pos))
+		elif n > 0:
+			model.click(p.child(pos - 1))
+		else:
+			model.click(p)
+
+
+class DeleteCommand(object):
+	def __init__(self, node):
+		self._node = node
+
+	def do(self, model):
+		model.click(None)
+		pos = self._node.index
+		self._pos = pos
+		self._node.delete()
+		for o in model._observers:
+			o.on_node_delete(model, self._node, pos)
+		p = self._node.parent
+		n = p.count_children()
+		if n > pos:
+			model.click(p.child(pos))
+		elif n > 0:
+			model.click(p.child(pos - 1))
+		else:
+			model.click(p)
+	
+	def undo(self, model):
+		model.direct_add_child(self._node._parent, self._node, self._pos)
+		model.click(self._node)
+
 
 class EditCommand(object):
-	def __init__(self, new):
+	def __init__(self, node, new):
+		self._node = node
 		self._new = new
 
 	def do(self, model):
-		self._old = model.current.title
-		self._node = model.current
+		self._old = self._node.title
 		self._node.title = self._new
 		for o in model._observers:
 			o.on_node_change(model, self._node)
@@ -113,12 +164,12 @@ class EditCommand(object):
 
 
 class ColorCommand(object):
-	def __init__(self, new):
+	def __init__(self, node, new):
+		self._node = node
 		self._new = new
 
 	def do(self, model):
-		self._old = model.current.color
-		self._node = model.current
+		self._old = self._node.color
 		self._node.color = self._new
 		for o in model._observers:
 			o.on_node_change(model, self._node)
@@ -143,9 +194,16 @@ class Node(object):
 		else:
 			return self._children[n]
 
-	def append_child(self, c):
-		self._children.append(c)
+	def add_child(self, c, pos):
+		if pos is None:
+			self._children.append(c)
+		else:
+			self._children.insert(pos, c)
 		c._parent = self
+
+	def delete(self):
+		if self._parent:
+			self._parent._children.remove(self)
 
 	def children(self):
 		for c in self._children:
@@ -157,24 +215,21 @@ class Node(object):
 	def find_sibling(self, d, depth = 0):
 		p = self._parent
 		if p:
-			pos = 0
-			for c in p._children:
-				if c is self:
-					if d < 0:
-						if pos == 0:
-							return p.find_sibling(-1, depth + 1)
-						elif depth == 0:
-							return p._children[pos - 1]
-						else:
-							return p._children[pos - 1].find_child(-1, depth - 1)
-					elif d > 0:
-						if pos == len(p._children) - 1:
-							return p.find_sibling(1, depth + 1)
-						elif depth == 0:
-							return p._children[pos + 1]
-						else:
-							return p._children[pos + 1].find_child(1, depth - 1)
-				pos += 1
+			pos = self.index
+			if d < 0:
+				if pos == 0:
+					return p.find_sibling(-1, depth + 1)
+				elif depth == 0:
+					return p._children[pos - 1]
+				else:
+					return p._children[pos - 1].find_child(-1, depth - 1)
+			elif d > 0:
+				if pos == len(p._children) - 1:
+					return p.find_sibling(1, depth + 1)
+				elif depth == 0:
+					return p._children[pos + 1]
+				else:
+					return p._children[pos + 1].find_child(1, depth - 1)
 		return None
 
 	def find_child(self, d, depth):
@@ -189,6 +244,19 @@ class Node(object):
 				return c.find_child(d, depth - 1)
 		else:
 			return self.find_sibling(d, depth + 1)
+
+	@property
+	def index(self):
+		if not self._parent:
+			return None
+
+		pos = 0
+		for n in self._parent._children:
+			if n is self:
+				return pos
+			pos += 1
+
+		return None
 
 	@property
 	def parent(self):

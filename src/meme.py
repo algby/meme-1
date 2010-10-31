@@ -14,12 +14,12 @@ if __name__ == "__main__":
 	model = gui._model
 	root = model._root
 	for i in xrange(0, 5):
-		model.direct_append_child(root, Node("Node %s" % ("x" * i)))
+		model.direct_add_child(root, Node("Node %s" % ("x" * i)))
 	for i in xrange(0, 2):
-		model.direct_append_child(root.child(1), Node("Node %d" % i))
+		model.direct_add_child(root.child(1), Node("Node %d" % i))
 	for i in xrange(0, 7):
-		model.direct_append_child(root.child(4), Node("Node %d" % i))
-	model.direct_append_child(root.child(1).child(1), Node("Longer node"))
+		model.direct_add_child(root.child(4), Node("Node %d" % i))
+	model.direct_add_child(root.child(1).child(1), Node("Longer node"))
 
 	i = [0]
 	def idle():
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 		node = node.child(i[0] % 5)
 		gui._model.click(node)
 		a = time.time()
-		gui._model.append_child(node, Node("X %d" % i[0]))
+		gui._model.add_child(node, Node("X %d" % i[0]))
 		print "Add took %fms" % ((time.time() - a) * 1000)
 		i[0] += 1
 		if i[0] == 100:
