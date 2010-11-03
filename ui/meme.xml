@@ -22,38 +22,37 @@
                     <property name="visible">True</property>
                     <child>
                       <object class="GtkImageMenuItem" id="file_new">
-                        <property name="label">gtk-new</property>
                         <property name="visible">True</property>
-                        <property name="use_underline">True</property>
+                        <property name="related_action">new_action</property>
+                        <property name="use_action_appearance">True</property>
                         <property name="use_stock">True</property>
-                        <property name="accel_group">accels</property>
+                        <accelerator key="n" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="file_open">
-                        <property name="label">gtk-open</property>
                         <property name="visible">True</property>
-                        <property name="use_underline">True</property>
+                        <property name="related_action">open_action</property>
+                        <property name="use_action_appearance">True</property>
                         <property name="use_stock">True</property>
-                        <property name="accel_group">accels</property>
+                        <accelerator key="o" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="file_save">
-                        <property name="label">gtk-save</property>
                         <property name="visible">True</property>
-                        <property name="use_underline">True</property>
+                        <property name="related_action">save_action</property>
+                        <property name="use_action_appearance">True</property>
                         <property name="use_stock">True</property>
-                        <property name="accel_group">accels</property>
+                        <accelerator key="s" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="file_saveas">
-                        <property name="label">gtk-save-as</property>
                         <property name="visible">True</property>
-                        <property name="use_underline">True</property>
+                        <property name="related_action">saveas_action</property>
+                        <property name="use_action_appearance">True</property>
                         <property name="use_stock">True</property>
-                        <property name="accel_group">accels</property>
                       </object>
                     </child>
                     <child>
@@ -68,6 +67,7 @@
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <property name="accel_group">accels</property>
+                        <accelerator key="q" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                         <signal name="activate" handler="on_file_quit_activate"/>
                       </object>
                     </child>
@@ -186,9 +186,10 @@
             <child>
               <object class="GtkToolButton" id="tool_new">
                 <property name="visible">True</property>
+                <property name="related_action">new_action</property>
+                <property name="use_action_appearance">True</property>
                 <property name="label" translatable="yes">New</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-new</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -198,9 +199,10 @@
             <child>
               <object class="GtkToolButton" id="tool_open">
                 <property name="visible">True</property>
+                <property name="related_action">open_action</property>
+                <property name="use_action_appearance">True</property>
                 <property name="label" translatable="yes">Open</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-open</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -210,9 +212,10 @@
             <child>
               <object class="GtkToolButton" id="tool_save">
                 <property name="visible">True</property>
+                <property name="related_action">save_action</property>
+                <property name="use_action_appearance">True</property>
                 <property name="label" translatable="yes">Save</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-save</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -222,9 +225,10 @@
             <child>
               <object class="GtkToolButton" id="tool_saveas">
                 <property name="visible">True</property>
+                <property name="related_action">saveas_action</property>
+                <property name="use_action_appearance">True</property>
                 <property name="label" translatable="yes">Save As</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-save-as</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -438,5 +442,29 @@
     <property name="short_label">Redo</property>
     <property name="stock_id">gtk-redo</property>
     <signal name="activate" handler="on_redo_action_activate"/>
+  </object>
+  <object class="GtkAction" id="new_action">
+    <property name="label">New</property>
+    <property name="short_label">New</property>
+    <property name="stock_id">gtk-new</property>
+    <signal name="activate" handler="on_new_action_activate"/>
+  </object>
+  <object class="GtkAction" id="open_action">
+    <property name="label">Open...</property>
+    <property name="short_label">Open</property>
+    <property name="stock_id">gtk-open</property>
+    <signal name="activate" handler="on_open_action_activate"/>
+  </object>
+  <object class="GtkAction" id="save_action">
+    <property name="label">Save</property>
+    <property name="short_label">Save</property>
+    <property name="stock_id">gtk-save</property>
+    <signal name="activate" handler="on_save_action_activate"/>
+  </object>
+  <object class="GtkAction" id="saveas_action">
+    <property name="label">Save As...</property>
+    <property name="short_label">Save As</property>
+    <property name="stock_id">gtk-save-as</property>
+    <signal name="activate" handler="on_saveas_action_activate"/>
   </object>
 </interface>

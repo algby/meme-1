@@ -5,12 +5,17 @@ from meme.layout import Layout
 from meme.model import *
 from meme.renderer import Renderer
 from meme.style import GlobalStyle
+from meme import io
 
 class MemeGui(Observer):
-	def __init__(self):
+	def __init__(self, model = None):
 		self._layout = None
 		self._renderer = None
-		self._model = Model("MyMap")
+		self._filename = None
+		if model:
+			self._model = model
+		else:
+			self._model = Model()
 		self._model.observe(self)
 
 		self._builder = gtk.Builder()
@@ -22,6 +27,7 @@ class MemeGui(Observer):
 		self._text = self._builder.get_object("text")
 		self._undo = self._builder.get_object("undo_action")
 		self._redo = self._builder.get_object("redo_action")
+		self._save = self._builder.get_object("save_action")
 
 		self._main_win.show()
 		self._canvas.grab_focus()
@@ -66,9 +72,9 @@ class MemeGui(Observer):
 		self._update_tools()
 
 	def _update_tools(self):
-		print self._model.has_undo
 		self._undo.set_sensitive(self._model.has_undo)
 		self._redo.set_sensitive(self._model.has_redo)
+		self._save.set_sensitive(self._filename is not None and not self._model.is_clean)
 
 	def on_main_win_destroy(self, widget, data = None):
 		gtk.main_quit()
@@ -138,6 +144,51 @@ class MemeGui(Observer):
 
 	def on_redo_action_activate(self, widget, data = None):
 		self._model.redo()
+
+	def on_new_action_activate(self, widget, data = None):
+		self._filename = None
+		self._model = Model()
+		self._layout = Layout(self._model, GlobalStyle(), self._renderer)
+		self._model.observe(self)
+		self._canvas.grab_focus()
+		self._update_tools()
+
+	def on_open_action_activate(self, widget, data = None):
+		dlg = gtk.FileChooserDialog("Open...", action = gtk.FILE_CHOOSER_ACTION_OPEN,
+			buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+		r = dlg.run()
+		if r == gtk.RESPONSE_OK:
+			f = dlg.get_filename()
+			if f.endswith(".mm"):
+				root = io.read_freemind(f)
+				self._filename = None
+			else:
+				root = io.read_native(f)
+				self._filename = f
+			self._model = Model(root)
+			self._layout = Layout(self._model, GlobalStyle(), self._renderer)
+			self._model.observe(self)
+			self._canvas.grab_focus()
+			self._update_tools()
+		dlg.destroy()
+
+	def on_save_action_activate(self, widget, data = None):
+		if self._filename:
+			io.write_native(self._filename, self._model.root)
+			self._model.mark_clean()
+		self._update_tools()
+
+	def on_saveas_action_activate(self, widget, data = None):
+		dlg = gtk.FileChooserDialog("Save As...", action = gtk.FILE_CHOOSER_ACTION_SAVE,
+			buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+		r = dlg.run()
+		if r == gtk.RESPONSE_OK:
+			f = dlg.get_filename()
+			io.write_native(f, self._model.root)
+			self._filename = f
+			self._model.mark_clean()
+		dlg.destroy()
+		self._update_tools()
 
 	def on_node_select(self, model, node, old):
 		self._text.set_text(node.title if node else "")

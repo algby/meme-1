@@ -1,8 +1,13 @@
 import time
 
 class Model(object):
-	def __init__(self, name):
-		self._root = Node(name)
+	def __init__(self, root = None):
+		if root:
+			self._root = root
+			self._clean = 0
+		else:
+			self._root = Node("Meme")
+			self._clean = -1
 		self._current = None
 		self._undo = []
 		self._redo = []
@@ -10,6 +15,8 @@ class Model(object):
 
 	def do(self, cmd):
 		if cmd:
+			if len(self._undo) < self._clean:
+				self._clean = -1
 			self._undo.append(cmd)
 			self._redo = []
 			cmd.do(self)
@@ -49,6 +56,9 @@ class Model(object):
 	def observe(self, observer):
 		self._observers.append(observer)
 
+	def mark_clean(self):
+		self._clean = len(self._undo)
+
 	@property
 	def root(self):
 		return self._root
@@ -71,6 +81,10 @@ class Model(object):
 	@property
 	def has_redo(self):
 		return len(self._redo) > 0
+
+	@property
+	def is_clean(self):
+		return len(self._undo) == self._clean
 
 	def direct_add_child(self, node, child, pos = None):
 		a = time.time()
@@ -194,7 +208,7 @@ class Node(object):
 		else:
 			return self._children[n]
 
-	def add_child(self, c, pos):
+	def add_child(self, c, pos = None):
 		if pos is None:
 			self._children.append(c)
 		else:

@@ -17,6 +17,8 @@ class Layout(Observer):
 
 		self._peers[model.root].reflow()
 		renderer.resize(*self.size)
+		renderer.viewport(*self.size)
+		renderer.clear_all()
 		self.render(0, 0, *self.size)
 
 	def on_node_select(self, model, node, old):

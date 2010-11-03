@@ -63,6 +63,13 @@ class Renderer(object):
 
 		return pix
 
+	def clear_all(self, color = None):
+		ctx = self._ctx
+		ctx.set_source_rgb(*(color or self._style.background))
+		ctx.paint()
+		w, h = self._pixmap.get_size()
+		self.redraw(0, 0, w, h)
+
 	def clear(self, left, top, width, height, color = None):
 		ctx = self._ctx
 		ctx.set_source_rgb(*(color or self._style.background))
