@@ -1,4 +1,6 @@
 .*.swp
 *.bak
 *.pyc
+*.pyo
 *.meme
+*.mm

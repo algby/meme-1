@@ -1,0 +1,58 @@
+2010-11-15: Basic functionality
+
+Just about usable. No known severe bugs, but many features unimplemented - not all menu options work.
+
+Currently working:
+
+- Basic map display
+- Load/save
+- Import Freemind .mm files
+- Basic editing
+- Node colours
+
+To fix next:
+
+- Some undo steps should be merged
+- Display/editing of nodes containing newlines
+- File overwrite prompt
+- Selection should stay on-screen
+- Tab title
+- Toolbar colour button
+- Create/delete nodes using toolbar
+
+To implement soon:
+
+- Home key
+- Copy/paste
+- Expand/collapse nodes
+- Update display as you type
+- Rendering options
+- Code cleanups
+- Multiple tabs
+- Reordering nodes
+- Export to text and static HTML
+
+Future work:
+
+- More rendering options
+- Some sort of style-sheets
+- Nodes to the left of the root
+- I18n
+- Zooming
+- More principled box model
+- Multiple text sizes
+- Sigils
+- Export to PDF, PNG, dynamic HTML
+- Printing
+- Distro packaging
+- Title, author, etc.
+
+To consider:
+
+- Cross-links
+- URLs
+- Collaboration
+- Windows support
+- Switch to Clutter for display
+- Export to Flash, HTML5
+- Complex layouts

@@ -1,3 +1,6 @@
+# Meme: a fast mind-mapping tool
+# (c) 2010 Jamie Webb - MIT license
+
 import math, sys, pygtk, gtk, cairo, time
 pygtk.require('2.0')
 
@@ -8,7 +11,7 @@ from meme.style import GlobalStyle
 from meme import io
 
 class MemeGui(Observer):
-	def __init__(self, model = None):
+	def __init__(self, xml, model = None):
 		self._layout = None
 		self._renderer = None
 		self._filename = None
@@ -19,7 +22,7 @@ class MemeGui(Observer):
 		self._model.observe(self)
 
 		self._builder = gtk.Builder()
-		self._builder.add_from_file("ui/meme.xml")
+		self._builder.add_from_file(xml)
 		self._builder.connect_signals(self)
 
 		self._main_win = self._builder.get_object("main_win")
@@ -120,8 +123,8 @@ class MemeGui(Observer):
 			self._text.set_position(1)
 		elif k in self._key_dispatch:
 			self._key_dispatch[k](model)
-		else:
-			print "No binding for %d / %s" % (k, data)
+		#else:
+		#	print "No binding for %d / %s" % (k, data)
 		return True
 
 	def on_text_key_press_event(self, widget, data = None):

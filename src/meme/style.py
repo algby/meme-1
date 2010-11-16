@@ -1,3 +1,6 @@
+# Meme: a fast mind-mapping tool
+# (c) 2010 Jamie Webb - MIT license
+
 class GlobalStyle(object):
 	def __init__(self):
 		self.marginx = 20
@@ -13,7 +16,7 @@ class GlobalStyle(object):
 
 		self.colors = [
 			((0, 0, 0), (1, 1, 1)),
-			((1, 0, 0), (1, 0.9, 0.9)),
+			((0.8, 0, 0), (1, 0.95, 0.95)),
 			((0.7, 0.3, 0), (1, 0.95, 0.8)),
 			((0, 0.5, 0), (0.9, 1, 0.9)),
 			((0, 0, 1), (0.9, 0.9, 1))

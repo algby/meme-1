@@ -1,0 +1,29 @@
+Meme: a fast mind-mapping tool
+(c) 2010 Jamie Webb - MIT license
+
+Requires:
+
+- Python 2.6
+- PyGTK 2.22
+
+To install:
+
+  make && sudo make install
+
+To run:
+
+  meme
+
+Keyboard reference:
+
+  Up/Down     Move between nodes at the current nexting level
+  Left/Right  Move between nesting levels
+  Home        Go to the root node
+  Enter       Add a new sibling below the selected node
+  Tab         Add a new child of the selected node
+  Insert      Edit the text of the selected node
+  Space       Collaspe/Expand the selected node
+
+Or, just start typing to replace the text of the current node.
+
+While editing, press Enter/Tab/Up/Down to finish, or Escape to abort.

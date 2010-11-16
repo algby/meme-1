@@ -1,3 +1,6 @@
+# Meme: a fast mind-mapping tool
+# (c) 2010 Jamie Webb - MIT license
+
 import time
 
 class Model(object):
@@ -34,10 +37,10 @@ class Model(object):
 			cmd.do(self)
 
 	def click(self, node):
-		if node:
-			print "Clicked: %s" % node.title
-		else:
-			print "Clicked away"
+		#if node:
+		#	print "Clicked: %s" % node.title
+		#else:
+		#	print "Clicked away"
 		old = self._current
 		if node == old:
 			return
@@ -91,7 +94,7 @@ class Model(object):
 		node.add_child(child, pos)
 		for o in self._observers:
 			o.on_node_add(self, child, pos)
-		print "Add took %fms" % ((time.time() - a) * 1000)
+		#print "Add took %fms" % ((time.time() - a) * 1000)
 
 
 class Observer(object):

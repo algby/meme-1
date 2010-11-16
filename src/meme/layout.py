@@ -1,3 +1,6 @@
+# Meme: a fast mind-mapping tool
+# (c) 2010 Jamie Webb - MIT license
+
 from model import Observer
 
 class Layout(Observer):

@@ -1,3 +1,6 @@
+# Meme: a fast mind-mapping tool
+# (c) 2010 Jamie Webb - MIT license
+
 import math, sys, pygtk, gtk, pango, cairo, random, time
 
 class Renderer(object):
@@ -96,25 +99,9 @@ class Renderer(object):
 		self._canvas.set_size_request(width + self._style.marginx * 2 - self._style.padx,
 				height + self._style.marginy * 2)
 
-	def draw_node(self, node, peer, x, y, current):
-		ctx = self._ctx
-		style = self._style
-		gc = self._pixmap.new_gc()
-
-		#ctx.scale(self._zoom, self._zoom)
-
+	def draw_label(self, node, peer, x, y, cy, dimy2, style):
 		lo = self._make_layout(node.title)
 		tw, th = lo.get_pixel_size()
-		width = peer.outer_width
-		height = peer.total_height
-		cy = int(y + height / 2.0 + 0.5)
-		dimy2 = int(style.dimy / 2.0 + 0.5)
-		dimx = peer.inner_width
-
-		self.clear(x, y, width, height)
-		self._canvas.queue_draw_area(x, y, width, height)
-
-		ctx.save()
 		ctx.set_antialias(cairo.ANTIALIAS_NONE)
 		ctx.rectangle(x + 1, cy - dimy2 + 1, peer.inner_width - 1, style.dimy - 1)
 		if current:
@@ -128,6 +115,41 @@ class Renderer(object):
 
 		ctx.move_to(x + style.innerpad, cy - dimy2 + th / 3.0)
 		ctx.show_layout(lo)
+
+	def draw_label_alt(self, ctx, node, peer, x, y, cy, dimy2, style, current):
+		lo = self._make_layout(node.title)
+		tw, th = lo.get_pixel_size()
+		if current:
+			ctx.set_antialias(cairo.ANTIALIAS_NONE)
+			ctx.rectangle(x + 1, cy - dimy2 + 1, peer.inner_width - 1, style.dimy - 1)
+			ctx.set_source_rgb(*style.colors[0][1])
+			ctx.fill_preserve()
+			ctx.set_line_width(1.0)
+			ctx.set_source_rgb(*style.colors[0][0])
+			ctx.stroke()
+
+		ctx.set_source_rgb(*style.colors[node.color][0])
+		ctx.move_to(x + style.innerpad, cy - dimy2 + th / 3.0)
+		ctx.show_layout(lo)
+
+	def draw_node(self, node, peer, x, y, current):
+		ctx = self._ctx
+		style = self._style
+		gc = self._pixmap.new_gc()
+
+		#ctx.scale(self._zoom, self._zoom)
+
+		width = peer.outer_width
+		height = peer.total_height
+		cy = int(y + height / 2.0 + 0.5)
+		dimy2 = int(style.dimy / 2.0 + 0.5)
+		dimx = peer.inner_width
+
+		self.clear(x, y, width, height)
+		self._canvas.queue_draw_area(x, y, width, height)
+
+		ctx.save()
+		self.draw_label_alt(ctx, node, peer, x, y, cy, dimy2, style, current)
 		ctx.restore()
 
 		n = node.count_children()
@@ -153,44 +175,62 @@ class Renderer(object):
 
 			ccx = x + dimx + style.padx
 			ccy = int(y + pos + height / 2.0 + 0.5)
-			cty = int(ccy - style.dimy / 2.0)
 
 			if i == 0:
-				topline = int(ccy - cy + r * 2.0 + 0.5)
+				topline = int(ccy - cy + 0.5)
 			elif i == n - 1:
-				bottomline = int(ccy - cy - r * 2.0 + 0.5)
+				bottomline = int(ccy - cy + 0.5)
 
 			if ccy < cy:
-				self._pixmap.draw_drawable(gc, self._top_arc, 0, 0, x + dimx, cty, *self._top_arc.get_size())
+				if i != 0:
+					self._pixmap.draw_drawable(gc, self._top_arc, 0, int(dimy2 - r + 0.5), x + dimx, int(ccy - r + 0.5), style.padx, int(r * 2.0 - 0.5))
 			elif ccy > cy:
-				self._pixmap.draw_drawable(gc, self._bottom_arc, 0, 0, x + dimx, cty, *self._bottom_arc.get_size())
+				if i != n - 1:
+					self._pixmap.draw_drawable(gc, self._bottom_arc, 0, int(dimy2 - r + 0.5), x + dimx, int(ccy - r + 0.5), style.padx, int(r * 2.0 - 0.5))
 			else:
 				hline = True
 
 			pos += height
 			i += 1
 
+		if n > 1:
+			ctx.move_to(x + dimx + px2, cy)
+			ctx.rel_line_to(0, topline)
+			ctx.stroke()
+			ctx.move_to(x + dimx + px2, cy)
+			ctx.rel_line_to(0, bottomline)
+			ctx.stroke()
+
 		if n == 1:
 			ctx.move_to(x + dimx, cy)
 			ctx.rel_line_to(px2 - r, 0)
 			ctx.stroke()
-		else:
+
+		i = 0
+		pos = 0
+		for cp in peer.children():
+			height = cp.total_height
+
+			ccx = x + dimx + style.padx
+			ccy = int(y + pos + height / 2.0 + 0.5)
+
+			if i == 0 and ccy < cy:
+				self._pixmap.draw_drawable(gc, self._top_arc, 0, int(dimy2 - r + 0.5), x + dimx, int(ccy - r + 0.5), style.padx, int(r * 2.0 - 0.5))
+			elif i == n - 1 and ccy > cy:
+				self._pixmap.draw_drawable(gc, self._bottom_arc, 0, int(dimy2 - r + 0.5), x + dimx, int(ccy - r + 0.5), style.padx, int(r * 2.0 - 0.5))
+
+			pos += height
+			i += 1
+
+		if n != 1:
 			self._pixmap.draw_drawable(gc, self._middle_arc, 0,
 					int(dimy2 - r + 0.5), x + dimx, int(cy - r + 0.5),
-					style.padx, int(r * 2.0 + 0.5))
+					style.padx, int(r * 2.0 - 0.5))
 
 		if hline:
 				ctx.move_to(x + dimx + px2 - r, cy)
 				ctx.line_to(x + dimx + style.padx, cy)
 				ctx.stroke()
-
-		if n > 1:
-			ctx.move_to(x + dimx + px2, int(cy - r + 0.5))
-			ctx.rel_line_to(0, topline)
-			ctx.stroke()
-			ctx.move_to(x + dimx + px2, int(cy + r + 0.5))
-			ctx.rel_line_to(0, bottomline)
-			ctx.stroke()
 
 	def _make_layout(self, title):
 		lo = self._ctx.create_layout()
